@@ -11,13 +11,12 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
 <body class="p-4 md:p-10 text-slate-200">
 
-    <div x-data="sistemaAdmin" class="max-w-2xl mx-auto space-y-8">
+    <div x-data="sistemaAdmin" x-cloak x-show="autenticado" class="max-w-2xl mx-auto space-y-8">
         
         <header class="flex justify-between items-end border-b border-slate-800 pb-6">
             <div>
@@ -38,14 +37,14 @@
             <div class="flex gap-3 mb-8">
                 <input type="text" x-model="novoNome" @keyup.enter="adicionarPessoa()"
                        placeholder="Nome do colega..." 
-                       class="flex-1 bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-white shadow-inner">
+                       class="flex-1 bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-white shadow-inner text-sm">
                 <button @click="adicionarPessoa()" 
-                        class="bg-amber-600 hover:bg-amber-500 text-slate-900 font-black px-6 py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-600/20">
+                        class="bg-amber-600 hover:bg-amber-500 text-slate-900 font-black px-6 py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-600/20 text-sm">
                     ADD
                 </button>
             </div>
 
-            <div class="space-y-3 custom-scrollbar max-h-[400px] overflow-y-auto pr-2">
+            <div class="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 <template x-for="(pessoa, i) in listaEquipe" :key="pessoa.id">
                     <div class="group flex justify-between items-center bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:border-amber-500/30 transition-all">
                         <div class="flex items-center">
@@ -53,29 +52,11 @@
                             <span class="font-bold text-slate-200 text-lg" x-text="pessoa.nome"></span>
                         </div>
                         <div class="flex items-center gap-1">
-                            <button @click="mover(i, -1)" class="p-2 text-slate-500 hover:text-amber-500 transition-colors" title="Subir">
-                                ▲
-                            </button>
-                            <button @click="mover(i, 1)" class="p-2 text-slate-500 hover:text-amber-500 transition-colors" title="Descer">
-                                ▼
-                            </button>
+                            <button @click="mover(i, -1)" class="p-2 text-slate-500 hover:text-amber-500 transition-colors" title="Subir">▲</button>
+                            <button @click="mover(i, 1)" class="p-2 text-slate-500 hover:text-amber-500 transition-colors" title="Descer">▼</button>
                             <button @click="removerPessoa(pessoa.id)" class="ml-2 p-2 text-slate-500 hover:text-red-500 transition-all">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </section>
-
-        <section class="glass rounded-[2rem] p-8 shadow-2xl">
-            <h2 class="text-lg font-bold text-white mb-6">📜 Histórico Recente</h2>
-            <div class="space-y-3 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
-                <template x-for="log in historico" :key="log.id">
-                    <div class="flex justify-between items-center bg-slate-900/30 p-4 rounded-xl border border-slate-800/50">
-                        <div>
-                            <p class="text-[10px] font-black text-slate-500 uppercase" x-text="log.data"></p>
-                            <p class="font-bold text-amber-500" x-text="log.pessoa"></p>
                         </div>
                     </div>
                 </template>
@@ -92,18 +73,28 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('sistemaAdmin', () => ({
                 listaEquipe: [],
-                historico: [],
                 novoNome: '',
+                autenticado: false,
+                senhaMestra: 'xeraca@132', // ALTERE SUA SENHA AQUI
 
                 async init() {
-                    await this.carregarDados();
+                    this.verificarAcesso();
+                },
+
+                verificarAcesso() {
+                    const pass = prompt("Digite a senha de administrador:");
+                    if (pass === this.senhaMestra) {
+                        this.autenticado = true;
+                        this.carregarDados();
+                    } else {
+                        alert("Acesso negado!");
+                        window.location.href = 'index.html';
+                    }
                 },
 
                 async carregarDados() {
                     const { data: equipe } = await sb.from('cafe_equipe').select('*').order('ordem');
-                    const { data: hist } = await sb.from('cafe_historico').select('*').order('id', { ascending: false }).limit(10);
                     this.listaEquipe = equipe || [];
-                    this.historico = hist || [];
                 },
 
                 async adicionarPessoa() {
@@ -116,30 +107,23 @@
                 async removerPessoa(id) {
                     if(!confirm('Remover?')) return;
                     await sb.from('cafe_equipe').delete().eq('id', id);
-                    await this.reordenarBanco();
+                    this.reordenarBanco();
                 },
 
-                // Lógica de Movimentação
                 async mover(index, direcao) {
                     const novaPos = index + direcao;
                     if (novaPos < 0 || novaPos >= this.listaEquipe.length) return;
-
-                    // Swap local
                     const item = this.listaEquipe.splice(index, 1)[0];
                     this.listaEquipe.splice(novaPos, 0, item);
-
                     await this.reordenarBanco();
                 },
 
-                // Atualiza todos os índices 'ordem' no Supabase
                 async reordenarBanco() {
                     const updates = this.listaEquipe.map((p, i) => ({
                         id: p.id,
                         nome: p.nome,
                         ordem: i
                     }));
-
-                    // O Supabase insert com upsert resolve a reordenação em lote
                     await sb.from('cafe_equipe').upsert(updates);
                     await this.carregarDados();
                 }
