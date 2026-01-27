@@ -2,162 +2,83 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Café dos Pais (Cloud)</title>
+    <title>Admin - Cloud Café</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
 </head>
-<body class="bg-slate-900 p-4 md:p-10 text-white font-sans">
+<body class="bg-slate-900 p-6 text-white font-sans">
 
     <div x-data="sistemaAdmin" class="max-w-2xl mx-auto space-y-6">
-        
         <header class="flex justify-between items-center border-b border-slate-700 pb-4">
-            <h1 class="text-2xl font-bold text-amber-500 italic uppercase">Admin <span class="text-white text-xs tracking-widest ml-2 italic">Cloud Edition</span></h1>
-            <a href="index.html" class="text-xs bg-slate-800 px-3 py-1 rounded border border-slate-600 hover:bg-slate-700 transition">Ver Site Público</a>
+            <h1 class="text-2xl font-bold text-amber-500 italic">ADMIN CLOUD</h1>
+            <button @click="carregarDados()" class="text-[10px] bg-slate-800 px-2 py-1 rounded">Recarregar Banco</button>
         </header>
 
-        <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl">
-            <h2 class="text-lg font-bold mb-4 flex items-center text-slate-300">👥 Gestão da Fila</h2>
+        <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+            <h2 class="text-lg font-bold mb-4">👥 Gestão da Fila</h2>
             <div class="flex gap-2 mb-6">
-                <input type="text" x-model="novoNome" @keyup.enter="adicionarPessoa()"
-                       placeholder="Nome do colaborador..." 
-                       class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500 text-white">
-                <button @click="adicionarPessoa()" class="bg-amber-600 hover:bg-amber-500 px-6 py-2 rounded-lg font-bold transition">ADICIONAR</button>
+                <input type="text" x-model="novoNome" placeholder="Novo nome..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                <button @click="adicionarPessoa()" class="bg-amber-600 hover:bg-amber-500 px-6 py-2 rounded-lg font-bold">ADICIONAR</button>
             </div>
-
-            <template x-if="loading">
-                <p class="text-center py-4 text-slate-500 animate-pulse text-sm font-mono">Sincronizando com a nuvem...</p>
-            </template>
 
             <div class="space-y-2">
                 <template x-for="(pessoa, i) in listaEquipe" :key="pessoa.id">
-                    <div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-lg border border-slate-800">
-                        <span class="font-bold text-slate-200" x-text="(i + 1) + '. ' + pessoa.nome"></span>
-                        <div class="flex gap-4 items-center">
-                            <button @click="removerPessoa(pessoa.id)" class="p-1 text-red-500 hover:bg-red-900/20 rounded font-black">✕</button>
-                        </div>
+                    <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-800">
+                        <span x-text="(i + 1) + '. ' + pessoa.nome"></span>
+                        <button @click="removerPessoa(pessoa.id)" class="text-red-500 font-bold px-2">✕</button>
                     </div>
-                </template>
-            </div>
-        </div>
-
-        <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-bold text-slate-300 italic">📜 Histórico de Registros</h2>
-                <button @click="adicionarRegistroManual()" class="text-[10px] bg-emerald-600 px-3 py-1 rounded font-bold hover:bg-emerald-500 tracking-tighter uppercase">Novo Registro</button>
-            </div>
-
-            <div class="space-y-3 max-h-80 overflow-y-auto pr-2">
-                <template x-for="log in historico" :key="log.id">
-                    <div class="group bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
-                        <div class="flex-1">
-                            <p class="text-slate-500 text-[10px] font-mono uppercase mb-1" x-text="log.data"></p>
-                            <p class="text-amber-500 font-bold text-lg leading-tight" x-text="log.pessoa"></p>
-                        </div>
-                        <button @click="removerLog(log.id)" class="p-2 text-slate-700 hover:text-red-500 transition">
-                            ✕
-                        </button>
-                    </div>
-                </template>
-                
-                <template x-if="historico.length === 0 && !loading">
-                    <div class="text-center py-6 text-slate-600 text-sm italic border-2 border-dashed border-slate-700 rounded-xl">Nenhum registro no banco de dados.</div>
                 </template>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIGURAÇÕES DO SUPABASE
         const SUPABASE_URL = 'https://ruduyqqawoobctarrjkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZHV5cXFhd29vYmN0YXJyamtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NTE0NzQsImV4cCI6MjA4NTEyNzQ3NH0.-uSYNlG5DByz0UwA5guCYIIY_MXE24QmP-7QJyFAHiI';
         
-        // Inicialização global do cliente Supabase para Navegador
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Inicialização imediata
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         document.addEventListener('alpine:init', () => {
             Alpine.data('sistemaAdmin', () => ({
                 listaEquipe: [],
-                historico: [],
                 novoNome: '',
-                loading: true,
 
                 async init() {
+                    console.log("Alpine Iniciado");
                     await this.carregarDados();
                 },
 
                 async carregarDados() {
-                    this.loading = true;
-                    try {
-                        // Busca equipe ordenada
-                        const { data: equipe } = await supabaseClient
-                            .from('cafe_equipe')
-                            .select('*')
-                            .order('ordem', { ascending: true });
-                        this.listaEquipe = equipe || [];
-
-                        // Busca histórico ordenado pelo ID mais recente
-                        const { data: hist } = await supabaseClient
-                            .from('cafe_historico')
-                            .select('*')
-                            .order('id', { ascending: false });
-                        this.historico = hist || [];
-                    } catch (err) {
-                        console.error("Erro ao carregar dados:", err);
-                    } finally {
-                        this.loading = false;
+                    const { data, error } = await sb.from('cafe_equipe').select('*').order('ordem');
+                    if (error) {
+                        alert("Erro ao ler banco: " + error.message);
+                    } else {
+                        this.listaEquipe = data || [];
                     }
                 },
 
                 async adicionarPessoa() {
-                    const nomeStr = this.novoNome.trim();
-                    if (nomeStr) {
-                        const { error } = await supabaseClient
-                            .from('cafe_equipe')
-                            .insert([{ 
-                                nome: nomeStr, 
-                                ordem: this.listaEquipe.length 
-                            }]);
-                        
-                        if(!error) {
-                            this.novoNome = '';
-                            await this.carregarDados();
-                        }
+                    if (!this.novoNome.trim()) return;
+                    
+                    const { error } = await sb.from('cafe_equipe').insert([
+                        { nome: this.novoNome.trim(), ordem: this.listaEquipe.length }
+                    ]);
+
+                    if (error) {
+                        alert("Erro ao salvar: " + error.message);
+                    } else {
+                        this.novoNome = '';
+                        await this.carregarDados();
                     }
                 },
 
                 async removerPessoa(id) {
-                    if(confirm('Deseja remover este nome da fila?')) {
-                        const { error } = await supabaseClient
-                            .from('cafe_equipe')
-                            .delete()
-                            .eq('id', id);
-                        
-                        if(!error) await this.carregarDados();
-                    }
-                },
-
-                async adicionarRegistroManual() {
-                    const nome = prompt("Quem comprou o pão?");
-                    const dataManual = new Date().toLocaleDateString('pt-BR');
-                    if(nome) {
-                        const { error } = await supabaseClient
-                            .from('cafe_historico')
-                            .insert([{ data: dataManual, pessoa: nome }]);
-                        
-                        if(!error) await this.carregarDados();
-                    }
-                },
-
-                async removerLog(id) {
-                    if(confirm('Excluir este registro do histórico?')) {
-                        const { error } = await supabaseClient
-                            .from('cafe_historico')
-                            .delete()
-                            .eq('id', id);
-                        
-                        if(!error) await this.carregarDados();
-                    }
+                    if(!confirm('Remover?')) return;
+                    const { error } = await sb.from('cafe_equipe').delete().eq('id', id);
+                    if (error) alert("Erro ao deletar");
+                    await this.carregarDados();
                 }
             }));
         });
