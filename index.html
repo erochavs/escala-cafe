@@ -6,7 +6,7 @@
     <title>Café da Semana - Nuvem</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #e2e8f0; }
@@ -22,33 +22,39 @@
                 <span class="text-4xl">🍞</span>
             </div>
             <h1 class="text-3xl font-extrabold tracking-tight text-white uppercase italic">Escala <span class="gradient-text">da Semana</span></h1>
-            <p class="text-slate-500 font-medium text-xs tracking-widest mt-1">SE MASCAR SERÁ EXPULSO, SUJEITO AO PARABÉNS NA SALA DE LEVI!</p>
+            <p class="text-slate-500 font-medium text-sm tracking-widest mt-1 uppercase">Café dos Pais</p>
         </header>
 
-        <template x-if="escala.length > 0">
-            <div class="mb-10">
-                <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-[2rem] p-[2px] shadow-[0_0_30px_rgba(245,158,11,0.2)]">
-                    <div class="bg-[#0f172a] rounded-[1.9rem] p-8 relative overflow-hidden">
-                        <div class="relative z-10">
-                            <span class="inline-block bg-amber-500 text-[#0f172a] text-[10px] font-black px-3 py-1 rounded-md mb-4 uppercase tracking-tighter" x-text="'Próxima ' + escala[0].diaSemana"></span>
-                            <p class="text-4xl font-black text-white leading-tight mb-2" x-text="escala[0].pessoa"></p>
-                            <p class="text-slate-400 font-medium text-sm" x-text="escala[0].dataStr"></p>
+        <template x-if="loading">
+            <div class="text-center py-20 text-slate-500">Carregando escala...</div>
+        </template>
+
+        <template x-if="!loading && escala.length > 0">
+            <div>
+                <div class="mb-10">
+                    <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-[2rem] p-[2px] shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                        <div class="bg-[#0f172a] rounded-[1.9rem] p-8 relative overflow-hidden">
+                            <div class="relative z-10">
+                                <span class="inline-block bg-amber-500 text-[#0f172a] text-[10px] font-black px-3 py-1 rounded-md mb-4 uppercase tracking-tighter" x-text="'Próxima ' + escala[0].diaSemana"></span>
+                                <p class="text-4xl font-black text-white leading-tight mb-2" x-text="escala[0].pessoa"></p>
+                                <p class="text-slate-400 font-medium text-sm" x-text="escala[0].dataStr"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="space-y-3">
+                    <template x-for="(item, index) in escala.slice(1)" :key="index">
+                        <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 flex justify-between items-center transition-all">
+                            <div>
+                                <p class="font-bold text-slate-100 text-lg leading-none mb-1" x-text="item.pessoa"></p>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest" x-text="item.dataStr + ' (' + item.diaSemana + ')'"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
             </div>
         </template>
-
-        <div class="space-y-3">
-            <template x-for="(item, index) in escala.slice(1)" :key="index">
-                <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 flex justify-between items-center transition-all">
-                    <div>
-                        <p class="font-bold text-slate-100 text-lg leading-none mb-1" x-text="item.pessoa"></p>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest" x-text="item.dataStr + ' (' + item.diaSemana + ')'"></p>
-                    </div>
-                </div>
-            </template>
-        </div>
 
         <footer class="mt-20 py-4 text-center">
             <a href="admin.html" class="inline-block w-12 h-12 opacity-0 cursor-default">.</a>
@@ -56,28 +62,45 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'sb_publishable_DjWbN2NrfjKTmm9LBLudpA_0cphVk4e';
-        const SUPABASE_KEY = 'sb_secret_tLbXFlTVfAX2mzEwa-ta_A_mLFOVf-D';
-        const supabase = exports.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Use a URL que começa com https:// e a KEY que você pegou no painel
+        const SUPABASE_URL = 'https://ruduyqqawoobctarrjkh.supabase.co;
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZHV5cXFhd29vYmN0YXJyamtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NTE0NzQsImV4cCI6MjA4NTEyNzQ3NH0.-uSYNlG5DByz0UwA5guCYIIY_MXE24QmP-7QJyFAHiI';
+        
+        // A forma correta de iniciar o cliente no navegador via CDN:
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         document.addEventListener('alpine:init', () => {
             Alpine.data('sistemaPublico', () => ({
                 pessoas: [],
                 escala: [],
+                loading: true,
 
                 async init() {
-                    const { data } = await supabase.from('cafe_equipe').select('nome').order('ordem', { ascending: true });
-                    this.pessoas = data.map(p => p.nome);
-                    this.gerarEscala();
-                    this.registrarNoHistorico();
+                    try {
+                        const { data, error } = await supabase
+                            .from('cafe_equipe')
+                            .select('nome')
+                            .order('ordem', { ascending: true });
+                        
+                        if (error) throw error;
+
+                        this.pessoas = data.map(p => p.nome);
+                        this.gerarEscala();
+                        this.registrarNoHistorico();
+                    } catch (err) {
+                        console.error("Erro ao carregar dados:", err);
+                    } finally {
+                        this.loading = false;
+                    }
                 },
 
                 async registrarNoHistorico() {
                     let agora = new Date();
                     let hojeStr = agora.toLocaleDateString('pt-BR');
+                    // Quinta=4, Sexta=5
                     if ([4,5].includes(agora.getDay()) && this.escala.length > 0) {
                         const { data: exist } = await supabase.from('cafe_historico').select('id').eq('data', hojeStr);
-                        if (exist.length === 0) {
+                        if (exist && exist.length === 0) {
                             await supabase.from('cafe_historico').insert([{ data: hojeStr, pessoa: this.escala[0].pessoa }]);
                         }
                     }
@@ -88,15 +111,20 @@
                     const res = [];
                     let dataLoop = new Date();
                     const dataRef = new Date(2026, 0, 1);
+                    
                     let buscaPassado = new Date(dataRef);
-                    let hojeInicio = new Date().setHours(0,0,0,0);
+                    let hojeInicio = new Date();
+                    hojeInicio.setHours(0,0,0,0);
+                    
                     let cafePassados = 0;
                     while(buscaPassado < hojeInicio) {
                         if([4,5].includes(buscaPassado.getDay())) cafePassados++;
                         buscaPassado.setDate(buscaPassado.getDate() + 1);
                     }
+                    
                     let indiceFila = cafePassados;
-                    while (res.length < 6) {
+                    let tentativas = 0;
+                    while (res.length < 6 && tentativas < 50) {
                         let d = dataLoop.getDay();
                         if ([4,5].includes(d)) {
                             res.push({
@@ -107,6 +135,7 @@
                             indiceFila++;
                         }
                         dataLoop.setDate(dataLoop.getDate() + 1);
+                        tentativas++;
                     }
                     this.escala = res;
                 }
