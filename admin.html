@@ -1,87 +1,144 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin - Cloud Café</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Cloud Café</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
 </head>
-<body class="bg-slate-900 p-6 text-white font-sans">
+<body class="p-4 md:p-10 text-slate-200">
 
-    <div x-data="sistemaAdmin" class="max-w-2xl mx-auto space-y-6">
-        <header class="flex justify-between items-center border-b border-slate-700 pb-4">
-            <h1 class="text-2xl font-bold text-amber-500 italic">ADMIN DOS PAIS</h1>
-            <button @click="carregarDados()" class="text-[10px] bg-slate-800 px-2 py-1 rounded">Recarregar Banco</button>
-        </header>
+    <div x-data="sistemaAdmin" class="max-w-2xl mx-auto space-y-8">
+        
+        <header class="flex justify-between items-end border-b border-slate-800 pb-6">
+            <div>
+                <h1 class="text-3xl font-black text-white italic tracking-tighter">ADMIN <span class="text-amber-500"></span></h1>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Gestão de Escala • Café dos Pais</p>
+            </div>
+            <a href="index.html" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-full border border-slate-700 transition-all font-bold uppercase tracking-widest">Sair</a>
+        </header>
 
-        <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
-            <h2 class="text-lg font-bold mb-4">👥 Gestão da Fila</h2>
-            <div class="flex gap-2 mb-6">
-                <input type="text" x-model="novoNome" placeholder="Novo nome..." class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white">
-                <button @click="adicionarPessoa()" class="bg-amber-600 hover:bg-amber-500 px-6 py-2 rounded-lg font-bold">ADICIONAR</button>
-            </div>
+        <section class="glass rounded-[2rem] p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-white flex items-center">
+                    <span class="mr-2">👥</span> Ordem da Fila
+                </h2>
+                <button @click="carregarDados()" class="text-[10px] text-amber-500 font-bold hover:underline">🔄 ATUALIZAR</button>
+            </div>
+            
+            <div class="flex gap-3 mb-8">
+                <input type="text" x-model="novoNome" @keyup.enter="adicionarPessoa()"
+                       placeholder="Nome do colega..." 
+                       class="flex-1 bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-amber-500 transition-all text-white shadow-inner">
+                <button @click="adicionarPessoa()" 
+                        class="bg-amber-600 hover:bg-amber-500 text-slate-900 font-black px-6 py-3 rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-600/20">
+                    ADD
+                </button>
+            </div>
 
-            <div class="space-y-2">
-                <template x-for="(pessoa, i) in listaEquipe" :key="pessoa.id">
-                    <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-800">
-                        <span x-text="(i + 1) + '. ' + pessoa.nome"></span>
-                        <button @click="removerPessoa(pessoa.id)" class="text-red-500 font-bold px-2">✕</button>
-                    </div>
-                </template>
-            </div>
-        </div>
-    </div>
+            <div class="space-y-3 custom-scrollbar max-h-[350px] overflow-y-auto pr-2">
+                <template x-for="(pessoa, i) in listaEquipe" :key="pessoa.id">
+                    <div class="group flex justify-between items-center bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:border-amber-500/30 transition-all">
+                        <div class="flex items-center">
+                            <span class="text-slate-500 font-mono text-xs mr-4" x-text="(i + 1).toString().padStart(2, '0')"></span>
+                            <span class="font-bold text-slate-200 text-lg" x-text="pessoa.nome"></span>
+                        </div>
+                        <button @click="removerPessoa(pessoa.id)" class="opacity-0 group-hover:opacity-100 p-2 text-slate-500 hover:text-red-500 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </section>
 
-    <script>
-        const SUPABASE_URL = 'https://ruduyqqawoobctarrjkh.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZHV5cXFhd29vYmN0YXJyamtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NTE0NzQsImV4cCI6MjA4NTEyNzQ3NH0.-uSYNlG5DByz0UwA5guCYIIY_MXE24QmP-7QJyFAHiI';
-        
-        // Inicialização imediata
-        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        <section class="glass rounded-[2rem] p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-white flex items-center">
+                    <span class="mr-2">📜</span> Histórico de Registros
+                </h2>
+                <button @click="adicionarRegistroManual()" class="text-[10px] bg-emerald-900/30 text-emerald-500 border border-emerald-500/30 px-3 py-1 rounded-full font-bold hover:bg-emerald-500 hover:text-white transition-all">NOVO LOG</button>
+            </div>
 
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('sistemaAdmin', () => ({
-                listaEquipe: [],
-                novoNome: '',
+            <div class="space-y-3 custom-scrollbar max-h-[300px] overflow-y-auto pr-2">
+                <template x-for="log in historico" :key="log.id">
+                    <div class="flex justify-between items-center bg-slate-900/30 p-4 rounded-xl border border-slate-800/50 group">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-tighter" x-text="log.data"></p>
+                            <p class="font-bold text-amber-500" x-text="log.pessoa"></p>
+                        </div>
+                        <button @click="removerLog(log.id)" class="opacity-0 group-hover:opacity-100 text-slate-700 hover:text-red-500 transition-all">✕</button>
+                    </div>
+                </template>
+            </div>
+        </section>
 
-                async init() {
-                    console.log("Alpine Iniciado");
-                    await this.carregarDados();
-                },
+    </div>
 
-                async carregarDados() {
-                    const { data, error } = await sb.from('cafe_equipe').select('*').order('ordem');
-                    if (error) {
-                        alert("Erro ao ler banco: " + error.message);
-                    } else {
-                        this.listaEquipe = data || [];
-                    }
-                },
+    <script>
+        const SUPABASE_URL = 'https://ruduyqqawoobctarrjkh.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZHV5cXFhd29vYmN0YXJyamtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NTE0NzQsImV4cCI6MjA4NTEyNzQ3NH0.-uSYNlG5DByz0UwA5guCYIIY_MXE24QmP-7QJyFAHiI';
+        
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-                async adicionarPessoa() {
-                    if (!this.novoNome.trim()) return;
-                    
-                    const { error } = await sb.from('cafe_equipe').insert([
-                        { nome: this.novoNome.trim(), ordem: this.listaEquipe.length }
-                    ]);
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('sistemaAdmin', () => ({
+                listaEquipe: [],
+                historico: [],
+                novoNome: '',
 
-                    if (error) {
-                        alert("Erro ao salvar: " + error.message);
-                    } else {
-                        this.novoNome = '';
-                        await this.carregarDados();
-                    }
-                },
+                async init() {
+                    await this.carregarDados();
+                },
 
-                async removerPessoa(id) {
-                    if(!confirm('Remover?')) return;
-                    const { error } = await sb.from('cafe_equipe').delete().eq('id', id);
-                    if (error) alert("Erro ao deletar");
-                    await this.carregarDados();
-                }
-            }));
-        });
-    </script>
+                async carregarDados() {
+                    const { data: equipe, error: err1 } = await sb.from('cafe_equipe').select('*').order('ordem');
+                    const { data: hist, error: err2 } = await sb.from('cafe_historico').select('*').order('id', { ascending: false });
+                    
+                    if (!err1) this.listaEquipe = equipe || [];
+                    if (!err2) this.historico = hist || [];
+                },
+
+                async adicionarPessoa() {
+                    if (!this.novoNome.trim()) return;
+                    const { error } = await sb.from('cafe_equipe').insert([
+                        { nome: this.novoNome.trim(), ordem: this.listaEquipe.length }
+                    ]);
+                    if (!error) { this.novoNome = ''; await this.carregarDados(); }
+                },
+
+                async removerPessoa(id) {
+                    if(confirm('Remover da fila?')) {
+                        await sb.from('cafe_equipe').delete().eq('id', id);
+                        await this.carregarDados();
+                    }
+                },
+
+                async adicionarRegistroManual() {
+                    const nome = prompt("Quem comprou o pão hoje?");
+                    const data = new Date().toLocaleDateString('pt-BR');
+                    if(nome) {
+                        await sb.from('cafe_historico').insert([{ data, pessoa: nome }]);
+                        await this.carregarDados();
+                    }
+                },
+
+                async removerLog(id) {
+                    if(confirm('Excluir este registro?')) {
+                        await sb.from('cafe_historico').delete().eq('id', id);
+                        await this.carregarDados();
+                    }
+                }
+            }));
+        });
+    </script>
 </body>
 </html>
