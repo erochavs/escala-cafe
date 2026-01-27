@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Café da Semana - Nuvem</title>
+    <title>Escala de Café - Café dos Pais</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -11,8 +11,8 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #e2e8f0; }
         .gradient-text { background: linear-gradient(90deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .glow { shadow-[0_0_30px_rgba(245,158,11,0.2)]; }
+        /* Estilo dos cards baseado na sua imagem */
+        .card-fila { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
     </style>
 </head>
 <body>
@@ -20,71 +20,37 @@
     <div x-data="sistemaPublico" class="max-w-md mx-auto px-6 py-10">
         
         <header class="mb-10 text-center">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-slate-800 rounded-3xl mb-4 border border-slate-700 shadow-2xl transition-transform hover:scale-110 duration-300">
-                <span class="text-4xl">🍞</span>
-            </div>
-            <h1 class="text-3xl font-extrabold tracking-tight text-white uppercase italic leading-none">Escala <span class="gradient-text">da Semana</span></h1>
+            <h1 class="text-3xl font-extrabold tracking-tight text-white uppercase italic">Escala <span class="gradient-text">da Semana</span></h1>
             <p class="text-slate-500 font-bold text-[10px] tracking-[0.2em] mt-2 uppercase opacity-80">Café dos Pais</p>
         </header>
 
-        <template x-if="loading">
-            <div class="text-center py-20">
-                <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-500 mb-4"></div>
-                <p class="text-slate-500 italic text-sm">Sincronizando com a nuvem...</p>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between px-2 mb-6">
+                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Sequência da Fila</h3>
+                <div class="h-[1px] flex-1 bg-slate-800 ml-4"></div>
             </div>
-        </template>
-
-        <template x-if="!loading && escala.length > 0">
-            <div class="space-y-8">
-                
-                <div class="relative group">
-                    <div class="absolute -inset-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-[2.5rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                    <div class="relative bg-gradient-to-br from-amber-500 to-orange-600 rounded-[2.2rem] p-[1px] shadow-2xl">
-                        <div class="bg-[#0f172a] rounded-[2.1rem] p-8 relative overflow-hidden">
-                            <div class="absolute -right-8 -top-8 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl"></div>
-                            
-                            <div class="relative z-10">
-                                <div class="flex items-center justify-between mb-4">
-                                    <span class="inline-block bg-amber-500 text-[#0f172a] text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-wider" x-text="'Próxima ' + escala[0].diaSemana"></span>
-                                    <span class="text-2xl animate-bounce">🥐</span>
-                                </div>
-                                <p class="text-4xl font-black text-white leading-tight mb-2 tracking-tight" x-text="escala[0].pessoa"></p>
-                                <div class="flex items-center text-slate-400 font-semibold text-sm">
-                                    <svg class="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    <span x-text="escala[0].dataStr"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between px-2 mb-4">
-                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Próximas Datas</h3>
-                        <div class="h-[1px] flex-1 bg-slate-800 ml-4"></div>
+            
+            <template x-for="(item, index) in escala" :key="index">
+                <div class="card-fila p-5 flex items-center transition-all hover:scale-[1.02]">
+                    <div :class="item.diaSemana === 'Quinta' ? 'border-amber-500/40 text-amber-500' : 'border-blue-500/40 text-blue-500'" 
+                         class="w-14 h-14 rounded-full border-2 flex items-center justify-center mr-6 shrink-0 bg-slate-900/50 shadow-inner">
+                        <span class="text-[10px] font-black uppercase tracking-tighter" x-text="item.diaSemana.substring(0,3)"></span>
                     </div>
                     
-                    <template x-for="(item, index) in escala.slice(1)" :key="index">
-                        <div class="glass rounded-2xl p-5 flex justify-between items-center transition-all hover:translate-x-1 hover:border-amber-500/30 group">
-                            <div class="flex items-center">
-                                <div :class="item.diaSemana === 'Quinta' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'" 
-                                     class="w-12 h-12 rounded-xl border flex flex-col items-center justify-center mr-4 transition-colors group-hover:bg-amber-500 group-hover:text-slate-900">
-                                    <span class="text-[10px] font-black uppercase leading-none" x-text="item.diaSemana.substring(0,3)"></span>
-                                </div>
-                                <div>
-                                    <p class="font-bold text-slate-100 text-lg leading-none mb-1 transition-colors group-hover:text-amber-500" x-text="item.pessoa"></p>
-                                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider" x-text="item.dataStr"></p>
-                                </div>
-                            </div>
-                            <div class="h-1.5 w-1.5 rounded-full bg-slate-700 group-hover:bg-amber-500 transition-colors"></div>
-                        </div>
-                    </template>
+                    <div class="flex flex-col">
+                        <p class="text-xl font-extrabold text-white leading-tight" x-text="item.pessoa"></p>
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5" x-text="item.dataStr"></p>
+                    </div>
                 </div>
-            </div>
-        </template>
+            </template>
+
+            <template x-if="loading">
+                <div class="text-center py-10 text-slate-600 italic animate-pulse">Sincronizando fila...</div>
+            </template>
+        </div>
 
         <footer class="mt-20 py-4 text-center">
-            <p class="text-[9px] text-slate-600 font-bold uppercase tracking-[0.3em] mb-4">Aviso: Se mascar será expulso</p>
+            <p class="text-[9px] text-slate-700 font-bold uppercase tracking-[0.3em]">Aviso: Sujeito ao parabéns na sala de Levi</p>
             <a href="admin.html" class="inline-block w-8 h-8 opacity-0 cursor-default select-none">.</a>
         </footer>
     </div>
@@ -109,11 +75,10 @@
                             .order('ordem', { ascending: true });
                         
                         if (error) throw error;
-
                         this.pessoas = data.map(p => p.nome);
                         this.gerarEscala();
                     } catch (err) {
-                        console.error("Erro Supabase:", err);
+                        console.error("Erro:", err);
                     } finally {
                         this.loading = false;
                     }
@@ -124,17 +89,13 @@
                     const res = [];
                     let dataLoop = new Date();
                     const dataRef = new Date(2026, 0, 1);
-                    
                     let buscaPassado = new Date(dataRef);
-                    let hojeInicio = new Date();
-                    hojeInicio.setHours(0,0,0,0);
-                    
+                    let hojeInicio = new Date().setHours(0,0,0,0);
                     let cafePassados = 0;
                     while(buscaPassado < hojeInicio) {
                         if([4,5].includes(buscaPassado.getDay())) cafePassados++;
                         buscaPassado.setDate(buscaPassado.getDate() + 1);
                     }
-                    
                     let indiceFila = cafePassados;
                     let tentativas = 0;
                     while (res.length < 6 && tentativas < 50) {
