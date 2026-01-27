@@ -21,8 +21,8 @@
         
         <header class="flex justify-between items-end border-b border-slate-800 pb-6">
             <div>
-                <h1 class="text-3xl font-black text-white italic tracking-tighter">ADMIN <span class="text-amber-500"></span></h1>
-                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Gestão de Escala • Café dos Pais</p>
+                <h1 class="text-3xl font-black text-white italic tracking-tighter">ADMIN <span class="text-amber-500">CLOUD</span></h1>
+                <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Gestão de Fila • Café dos Pais</p>
             </div>
             <a href="index.html" class="text-[10px] bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-full border border-slate-700 transition-all font-bold uppercase tracking-widest">Sair</a>
         </header>
@@ -32,7 +32,7 @@
                 <h2 class="text-lg font-bold text-white flex items-center">
                     <span class="mr-2">👥</span> Ordem da Fila
                 </h2>
-                <button @click="carregarDados()" class="text-[10px] text-amber-500 font-bold hover:underline">🔄 ATUALIZAR</button>
+                <button @click="carregarDados()" class="text-[10px] text-amber-500 font-bold hover:underline">🔄 SINCRONIZAR</button>
             </div>
             
             <div class="flex gap-3 mb-8">
@@ -45,42 +45,42 @@
                 </button>
             </div>
 
-            <div class="space-y-3 custom-scrollbar max-h-[350px] overflow-y-auto pr-2">
+            <div class="space-y-3 custom-scrollbar max-h-[400px] overflow-y-auto pr-2">
                 <template x-for="(pessoa, i) in listaEquipe" :key="pessoa.id">
                     <div class="group flex justify-between items-center bg-slate-800/40 p-4 rounded-2xl border border-slate-700/50 hover:border-amber-500/30 transition-all">
                         <div class="flex items-center">
                             <span class="text-slate-500 font-mono text-xs mr-4" x-text="(i + 1).toString().padStart(2, '0')"></span>
                             <span class="font-bold text-slate-200 text-lg" x-text="pessoa.nome"></span>
                         </div>
-                        <button @click="removerPessoa(pessoa.id)" class="opacity-0 group-hover:opacity-100 p-2 text-slate-500 hover:text-red-500 transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button @click="mover(i, -1)" class="p-2 text-slate-500 hover:text-amber-500 transition-colors" title="Subir">
+                                ▲
+                            </button>
+                            <button @click="mover(i, 1)" class="p-2 text-slate-500 hover:text-amber-500 transition-colors" title="Descer">
+                                ▼
+                            </button>
+                            <button @click="removerPessoa(pessoa.id)" class="ml-2 p-2 text-slate-500 hover:text-red-500 transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
                     </div>
                 </template>
             </div>
         </section>
 
         <section class="glass rounded-[2rem] p-8 shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-bold text-white flex items-center">
-                    <span class="mr-2">📜</span> Histórico de Registros
-                </h2>
-                <button @click="adicionarRegistroManual()" class="text-[10px] bg-emerald-900/30 text-emerald-500 border border-emerald-500/30 px-3 py-1 rounded-full font-bold hover:bg-emerald-500 hover:text-white transition-all">NOVO LOG</button>
-            </div>
-
-            <div class="space-y-3 custom-scrollbar max-h-[300px] overflow-y-auto pr-2">
+            <h2 class="text-lg font-bold text-white mb-6">📜 Histórico Recente</h2>
+            <div class="space-y-3 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
                 <template x-for="log in historico" :key="log.id">
-                    <div class="flex justify-between items-center bg-slate-900/30 p-4 rounded-xl border border-slate-800/50 group">
+                    <div class="flex justify-between items-center bg-slate-900/30 p-4 rounded-xl border border-slate-800/50">
                         <div>
-                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-tighter" x-text="log.data"></p>
+                            <p class="text-[10px] font-black text-slate-500 uppercase" x-text="log.data"></p>
                             <p class="font-bold text-amber-500" x-text="log.pessoa"></p>
                         </div>
-                        <button @click="removerLog(log.id)" class="opacity-0 group-hover:opacity-100 text-slate-700 hover:text-red-500 transition-all">✕</button>
                     </div>
                 </template>
             </div>
         </section>
-
     </div>
 
     <script>
@@ -100,42 +100,48 @@
                 },
 
                 async carregarDados() {
-                    const { data: equipe, error: err1 } = await sb.from('cafe_equipe').select('*').order('ordem');
-                    const { data: hist, error: err2 } = await sb.from('cafe_historico').select('*').order('id', { ascending: false });
-                    
-                    if (!err1) this.listaEquipe = equipe || [];
-                    if (!err2) this.historico = hist || [];
+                    const { data: equipe } = await sb.from('cafe_equipe').select('*').order('ordem');
+                    const { data: hist } = await sb.from('cafe_historico').select('*').order('id', { ascending: false }).limit(10);
+                    this.listaEquipe = equipe || [];
+                    this.historico = hist || [];
                 },
 
                 async adicionarPessoa() {
                     if (!this.novoNome.trim()) return;
-                    const { error } = await sb.from('cafe_equipe').insert([
-                        { nome: this.novoNome.trim(), ordem: this.listaEquipe.length }
-                    ]);
-                    if (!error) { this.novoNome = ''; await this.carregarDados(); }
+                    await sb.from('cafe_equipe').insert([{ nome: this.novoNome.trim(), ordem: this.listaEquipe.length }]);
+                    this.novoNome = '';
+                    await this.carregarDados();
                 },
 
                 async removerPessoa(id) {
-                    if(confirm('Remover da fila?')) {
-                        await sb.from('cafe_equipe').delete().eq('id', id);
-                        await this.carregarDados();
-                    }
+                    if(!confirm('Remover?')) return;
+                    await sb.from('cafe_equipe').delete().eq('id', id);
+                    await this.reordenarBanco();
                 },
 
-                async adicionarRegistroManual() {
-                    const nome = prompt("Quem comprou o pão hoje?");
-                    const data = new Date().toLocaleDateString('pt-BR');
-                    if(nome) {
-                        await sb.from('cafe_historico').insert([{ data, pessoa: nome }]);
-                        await this.carregarDados();
-                    }
+                // Lógica de Movimentação
+                async mover(index, direcao) {
+                    const novaPos = index + direcao;
+                    if (novaPos < 0 || novaPos >= this.listaEquipe.length) return;
+
+                    // Swap local
+                    const item = this.listaEquipe.splice(index, 1)[0];
+                    this.listaEquipe.splice(novaPos, 0, item);
+
+                    await this.reordenarBanco();
                 },
 
-                async removerLog(id) {
-                    if(confirm('Excluir este registro?')) {
-                        await sb.from('cafe_historico').delete().eq('id', id);
-                        await this.carregarDados();
-                    }
+                // Atualiza todos os índices 'ordem' no Supabase
+                async reordenarBanco() {
+                    const updates = this.listaEquipe.map((p, i) => ({
+                        id: p.id,
+                        nome: p.nome,
+                        ordem: i
+                    }));
+
+                    // O Supabase insert com upsert resolve a reordenação em lote
+                    await sb.from('cafe_equipe').upsert(updates);
+                    await this.carregarDados();
                 }
             }));
         });
