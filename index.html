@@ -26,7 +26,7 @@
         </header>
 
         <template x-if="loading">
-            <div class="text-center py-20 text-slate-500">Carregando escala...</div>
+            <div class="text-center py-20 text-slate-500 italic">Buscando dados na nuvem...</div>
         </template>
 
         <template x-if="!loading && escala.length > 0">
@@ -62,12 +62,12 @@
     </div>
 
     <script>
-        // Use a URL que começa com https:// e a KEY que você pegou no painel
-        const SUPABASE_URL = 'https://ruduyqqawoobctarrjkh.supabase.co;
+        // CORREÇÃO: Aspa fechada e URL limpa
+        const SUPABASE_URL = 'https://ruduyqqawoobctarrjkh.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1ZHV5cXFhd29vYmN0YXJyamtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NTE0NzQsImV4cCI6MjA4NTEyNzQ3NH0.-uSYNlG5DByz0UwA5guCYIIY_MXE24QmP-7QJyFAHiI';
         
-        // A forma correta de iniciar o cliente no navegador via CDN:
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Inicialização global
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         document.addEventListener('alpine:init', () => {
             Alpine.data('sistemaPublico', () => ({
@@ -77,7 +77,7 @@
 
                 async init() {
                     try {
-                        const { data, error } = await supabase
+                        const { data, error } = await supabaseClient
                             .from('cafe_equipe')
                             .select('nome')
                             .order('ordem', { ascending: true });
@@ -86,23 +86,10 @@
 
                         this.pessoas = data.map(p => p.nome);
                         this.gerarEscala();
-                        this.registrarNoHistorico();
                     } catch (err) {
-                        console.error("Erro ao carregar dados:", err);
+                        console.error("Erro Supabase:", err);
                     } finally {
                         this.loading = false;
-                    }
-                },
-
-                async registrarNoHistorico() {
-                    let agora = new Date();
-                    let hojeStr = agora.toLocaleDateString('pt-BR');
-                    // Quinta=4, Sexta=5
-                    if ([4,5].includes(agora.getDay()) && this.escala.length > 0) {
-                        const { data: exist } = await supabase.from('cafe_historico').select('id').eq('data', hojeStr);
-                        if (exist && exist.length === 0) {
-                            await supabase.from('cafe_historico').insert([{ data: hojeStr, pessoa: this.escala[0].pessoa }]);
-                        }
                     }
                 },
 
