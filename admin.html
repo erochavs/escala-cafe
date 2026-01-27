@@ -11,6 +11,8 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; }
         .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         [x-cloak] { display: none !important; }
     </style>
 </head>
@@ -62,6 +64,30 @@
                 </template>
             </div>
         </section>
+
+        <section class="glass rounded-[2rem] p-8 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-white flex items-center">
+                    <span class="mr-2">📜</span> Histórico de Registros
+                </h2>
+                <button @click="adicionarRegistroManual()" class="text-[10px] bg-emerald-900/30 text-emerald-500 border border-emerald-500/30 px-3 py-1 rounded-full font-bold hover:bg-emerald-500 hover:text-white transition-all">NOVO LOG</button>
+            </div>
+
+            <div class="space-y-3 custom-scrollbar max-h-[300px] overflow-y-auto pr-2">
+                <template x-for="log in historico" :key="log.id">
+                    <div class="flex justify-between items-center bg-slate-900/30 p-4 rounded-xl border border-slate-800/50 group">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-tighter" x-text="log.data"></p>
+                            <p class="font-bold text-amber-500" x-text="log.pessoa"></p>
+                        </div>
+                        <button @click="removerLog(log.id)" class="opacity-0 group-hover:opacity-100 text-slate-700 hover:text-red-500 transition-all">✕</button>
+                    </div>
+                </template>
+                <template x-if="historico.length === 0">
+                    <p class="text-center py-4 text-slate-600 italic text-sm">Nenhum registro encontrado.</p>
+                </template>
+            </div>
+        </section>
     </div>
 
     <script>
@@ -73,16 +99,17 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('sistemaAdmin', () => ({
                 listaEquipe: [],
+                historico: [],
                 novoNome: '',
                 autenticado: false,
-                senhaMestra: 'xereca@132', // ALTERE SUA SENHA AQUI
+                senhaMestra: 'admin123', // Mude aqui a sua senha
 
                 async init() {
                     this.verificarAcesso();
                 },
 
                 verificarAcesso() {
-                    const pass = prompt("Digite a senha de administrador:");
+                    const pass = prompt("Senha de Admin:");
                     if (pass === this.senhaMestra) {
                         this.autenticado = true;
                         this.carregarDados();
@@ -94,7 +121,9 @@
 
                 async carregarDados() {
                     const { data: equipe } = await sb.from('cafe_equipe').select('*').order('ordem');
+                    const { data: hist } = await sb.from('cafe_historico').select('*').order('id', { ascending: false });
                     this.listaEquipe = equipe || [];
+                    this.historico = hist || [];
                 },
 
                 async adicionarPessoa() {
@@ -105,9 +134,9 @@
                 },
 
                 async removerPessoa(id) {
-                    if(!confirm('Remover?')) return;
+                    if(!confirm('Remover da fila?')) return;
                     await sb.from('cafe_equipe').delete().eq('id', id);
-                    this.reordenarBanco();
+                    await this.reordenarBanco();
                 },
 
                 async mover(index, direcao) {
@@ -126,6 +155,22 @@
                     }));
                     await sb.from('cafe_equipe').upsert(updates);
                     await this.carregarDados();
+                },
+
+                async adicionarRegistroManual() {
+                    const nome = prompt("Quem comprou hoje?");
+                    const data = new Date().toLocaleDateString('pt-BR');
+                    if(nome) {
+                        await sb.from('cafe_historico').insert([{ data, pessoa: nome }]);
+                        await this.carregarDados();
+                    }
+                },
+
+                async removerLog(id) {
+                    if(confirm('Excluir log?')) {
+                        await sb.from('cafe_historico').delete().eq('id', id);
+                        await this.carregarDados();
+                    }
                 }
             }));
         });
