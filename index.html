@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escala de Café - Café dos Pais</title>
+    <title>Café dos Pais - Escala</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
@@ -11,8 +11,8 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #e2e8f0; }
         .gradient-text { background: linear-gradient(90deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        /* Estilo dos cards baseado na sua imagem */
-        .card-fila { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; }
+        .card-destaque { border: 2px solid #f59e0b; box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
+        .card-fila { background: #1e293b; border: 1px solid #334155; }
     </style>
 </head>
 <body>
@@ -20,38 +20,56 @@
     <div x-data="sistemaPublico" class="max-w-md mx-auto px-6 py-10">
         
         <header class="mb-10 text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-slate-800 rounded-2xl mb-4 border border-slate-700 shadow-2xl">
+                <span class="text-4xl">🍞</span>
+            </div>
             <h1 class="text-3xl font-extrabold tracking-tight text-white uppercase italic">Escala <span class="gradient-text">da Semana</span></h1>
-            <p class="text-slate-500 font-bold text-[10px] tracking-[0.2em] mt-2 uppercase opacity-80">Café dos Pais</p>
+            <p class="text-slate-500 font-bold text-[10px] tracking-widest mt-1 uppercase">SE MASCAR SERÁ EXPULSO, SUJEITO AO PARABÉNS NA SALA DE LEVI!</p>
         </header>
 
-        <div class="space-y-4">
-            <div class="flex items-center justify-between px-2 mb-6">
-                <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Sequência da Fila</h3>
-                <div class="h-[1px] flex-1 bg-slate-800 ml-4"></div>
-            </div>
-            
-            <template x-for="(item, index) in escala" :key="index">
-                <div class="card-fila p-5 flex items-center transition-all hover:scale-[1.02]">
-                    <div :class="item.diaSemana === 'Quinta' ? 'border-amber-500/40 text-amber-500' : 'border-blue-500/40 text-blue-500'" 
-                         class="w-14 h-14 rounded-full border-2 flex items-center justify-center mr-6 shrink-0 bg-slate-900/50 shadow-inner">
-                        <span class="text-[10px] font-black uppercase tracking-tighter" x-text="item.diaSemana.substring(0,3)"></span>
-                    </div>
-                    
-                    <div class="flex flex-col">
-                        <p class="text-xl font-extrabold text-white leading-tight" x-text="item.pessoa"></p>
-                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-0.5" x-text="item.dataStr"></p>
+        <template x-if="loading">
+            <div class="text-center py-20 text-slate-500 italic">Sincronizando...</div>
+        </template>
+
+        <template x-if="!loading && escala.length > 0">
+            <div class="space-y-10">
+                
+                <div class="card-destaque bg-[#0f172a] rounded-[2rem] p-8 relative overflow-hidden transition-transform hover:scale-[1.02]">
+                    <div class="relative z-10">
+                        <span class="inline-block bg-[#f59e0b] text-[#0f172a] text-[10px] font-black px-3 py-1 rounded-md mb-4 uppercase tracking-tighter" x-text="'Próxima ' + escala[0].diaSemana"></span>
+                        <p class="text-5xl font-black text-white leading-tight mb-2" x-text="escala[0].pessoa"></p>
+                        <div class="flex items-center text-slate-400 font-bold">
+                            <svg class="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span x-text="escala[0].dataStr"></span>
+                        </div>
                     </div>
                 </div>
-            </template>
 
-            <template x-if="loading">
-                <div class="text-center py-10 text-slate-600 italic animate-pulse">Sincronizando fila...</div>
-            </template>
-        </div>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between px-2 mb-6">
+                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Sequência da Fila</h3>
+                        <div class="h-[1px] flex-1 bg-slate-800 ml-4"></div>
+                    </div>
+                    
+                    <template x-for="(item, index) in escala.slice(1)" :key="index">
+                        <div class="card-fila p-5 rounded-2xl flex items-center transition-all hover:bg-slate-800/80">
+                            <div :class="item.diaSemana === 'Quinta' ? 'border-amber-500/40 text-amber-500' : 'border-blue-500/40 text-blue-400'" 
+                                 class="w-14 h-14 rounded-full border-2 flex items-center justify-center mr-6 shrink-0 bg-slate-900 shadow-inner">
+                                <span class="text-[10px] font-black uppercase tracking-tighter" x-text="item.diaSemana.substring(0,3)"></span>
+                            </div>
+                            
+                            <div>
+                                <p class="text-xl font-extrabold text-white leading-tight" x-text="item.pessoa"></p>
+                                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1" x-text="item.dataStr"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
 
         <footer class="mt-20 py-4 text-center">
-            <p class="text-[9px] text-slate-700 font-bold uppercase tracking-[0.3em]">Aviso: Sujeito ao parabéns na sala de Levi</p>
-            <a href="admin.html" class="inline-block w-8 h-8 opacity-0 cursor-default select-none">.</a>
+            <a href="admin.html" class="inline-block w-12 h-12 opacity-0 cursor-default">.</a>
         </footer>
     </div>
 
