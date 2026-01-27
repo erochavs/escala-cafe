@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Gestão e Histórico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+</head>
+<body class="bg-slate-900 p-4 md:p-10 text-white font-sans">
+
+    <div x-data="sistemaAdmin" class="max-w-2xl mx-auto space-y-6">
+        
+        <header class="flex justify-between items-center border-b border-slate-700 pb-4">
+            <h1 class="text-2xl font-bold text-amber-500 italic">ADMIN <span class="text-white text-sm tracking-widest ml-2">CAFE DOS PAIS</span></h1>
+            <a href="index.html" class="text-xs bg-slate-800 px-3 py-1 rounded border border-slate-600 hover:bg-slate-700 transition">Página Pública</a>
+        </header>
+
+        <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl">
+            <h2 class="text-lg font-bold mb-4 flex items-center text-slate-300">👥 Gestão da Fila</h2>
+            <div class="flex gap-2 mb-6">
+                <input type="text" x-model="novoNome" @keyup.enter="adicionarPessoa()"
+                       placeholder="Nome do colaborador..." 
+                       class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-amber-500">
+                <button @click="adicionarPessoa()" class="bg-amber-600 hover:bg-amber-500 px-6 py-2 rounded-lg font-bold">+</button>
+            </div>
+            <div class="space-y-2">
+                <template x-for="(nome, i) in pessoas" :key="i">
+                    <div class="flex justify-between items-center bg-slate-900/50 p-3 rounded-lg border border-slate-800">
+                        <span class="font-bold text-slate-200" x-text="(i + 1) + '. ' + nome"></span>
+                        <div class="flex gap-1">
+                            <button @click="subir(i)" class="p-1 bg-slate-800 rounded hover:bg-slate-700 text-[10px]">▲</button>
+                            <button @click="descer(i)" class="p-1 bg-slate-800 rounded hover:bg-slate-700 text-[10px]">▼</button>
+                            <button @click="removerPessoa(i)" class="p-1 text-red-500 hover:bg-red-900/20 rounded ml-2">✕</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-slate-300">📜 Histórico de Compras</h2>
+                <button @click="adicionarRegistroManual()" class="text-[10px] bg-emerald-600 px-2 py-1 rounded font-bold hover:bg-emerald-500">+ REGISTRO</button>
+            </div>
+
+            <div class="space-y-3 max-h-80 overflow-y-auto pr-2">
+                <template x-for="(log, index) in historico.slice().reverse()" :key="log.id || index">
+                    <div class="group bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
+                        <div class="flex-1">
+                            <input type="text" x-model="log.data" @change="salvarHistorico()" 
+                                   class="bg-transparent text-slate-500 text-xs font-mono outline-none border-b border-transparent focus:border-slate-700 w-full mb-1">
+                            <input type="text" x-model="log.pessoa" @change="salvarHistorico()"
+                                   class="bg-transparent text-amber-500 font-bold text-lg outline-none border-b border-transparent focus:border-amber-900 w-full">
+                        </div>
+                        <button @click="removerLog(historico.length - 1 - index)" class="opacity-0 group-hover:opacity-100 p-2 text-slate-600 hover:text-red-500 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                    </div>
+                </template>
+                
+                <template x-if="historico.length === 0">
+                    <div class="text-center py-6 text-slate-600 text-sm italic">Nenhum registro encontrado.</div>
+                </template>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-700 flex justify-between">
+                <p class="text-[10px] text-slate-500">Dica: Clique nos nomes para editar o histórico.</p>
+                <button @click="limparTudo()" class="text-[10px] text-red-900 font-bold hover:text-red-500">LIMPAR TUDO</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('sistemaAdmin', () => ({
+                pessoas: JSON.parse(localStorage.getItem('cafe_v3')) || [],
+                historico: JSON.parse(localStorage.getItem('cafe_historico')) || [],
+                novoNome: '',
+
+                init() {
+                    this.$watch('pessoas', val => localStorage.setItem('cafe_v3', JSON.stringify(val)));
+                },
+
+                salvarHistorico() {
+                    localStorage.setItem('cafe_historico', JSON.stringify(this.historico));
+                },
+
+                adicionarPessoa() {
+                    if (this.novoNome.trim()) {
+                        this.pessoas.push(this.novoNome.trim());
+                        this.novoNome = '';
+                    }
+                },
+
+                removerPessoa(index) {
+                    if(confirm('Remover da fila?')) this.pessoas.splice(index, 1);
+                },
+
+                subir(index) {
+                    if (index > 0) {
+                        const item = this.pessoas.splice(index, 1)[0];
+                        this.pessoas.splice(index - 1, 0, item);
+                    }
+                },
+
+                descer(index) {
+                    if (index < this.pessoas.length - 1) {
+                        const item = this.pessoas.splice(index, 1)[0];
+                        this.pessoas.splice(index + 1, 0, item);
+                    }
+                },
+
+                adicionarRegistroManual() {
+                    const dataHoje = new Date().toLocaleDateString('pt-BR');
+                    this.historico.push({
+                        id: Date.now(),
+                        data: dataHoje,
+                        pessoa: "Nome do Responsável"
+                    });
+                    this.salvarHistorico();
+                },
+
+                removerLog(realIndex) {
+                    if(confirm('Excluir este registro?')) {
+                        this.historico.splice(realIndex, 1);
+                        this.salvarHistorico();
+                    }
+                },
+
+                limparTudo() {
+                    if(confirm('APAGAR TUDO?')) {
+                        this.historico = [];
+                        this.salvarHistorico();
+                    }
+                }
+            }));
+        });
+    </script>
+</body>
+</html>
