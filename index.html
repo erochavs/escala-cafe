@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Café com os Pais</title>
+    <title>Café da Semana - Nuvem</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .dark-card { background: #1e293b; border: 1px solid #334155; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f172a; color: #e2e8f0; }
         .gradient-text { background: linear-gradient(90deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
-<body class="bg-[#0f172a] min-h-screen text-slate-200">
+<body>
 
     <div x-data="sistemaPublico" class="max-w-md mx-auto px-6 py-10">
         
@@ -29,15 +29,10 @@
             <div class="mb-10">
                 <div class="bg-gradient-to-br from-amber-500 to-orange-600 rounded-[2rem] p-[2px] shadow-[0_0_30px_rgba(245,158,11,0.2)]">
                     <div class="bg-[#0f172a] rounded-[1.9rem] p-8 relative overflow-hidden">
-                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/10 rounded-full blur-3xl"></div>
-                        
                         <div class="relative z-10">
                             <span class="inline-block bg-amber-500 text-[#0f172a] text-[10px] font-black px-3 py-1 rounded-md mb-4 uppercase tracking-tighter" x-text="'Próxima ' + escala[0].diaSemana"></span>
                             <p class="text-4xl font-black text-white leading-tight mb-2" x-text="escala[0].pessoa"></p>
-                            <div class="flex items-center text-slate-400 font-medium">
-                                <svg class="w-4 h-4 mr-2 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                <span x-text="escala[0].dataStr"></span>
-                            </div>
+                            <p class="text-slate-400 font-medium text-sm" x-text="escala[0].dataStr"></p>
                         </div>
                     </div>
                 </div>
@@ -45,69 +40,45 @@
         </template>
 
         <div class="space-y-3">
-            <div class="flex items-center justify-between px-2 mb-4">
-                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest text-[10px]">Sequência da Fila</h3>
-                <div class="h-[1px] flex-1 bg-slate-800 ml-4"></div>
-            </div>
-            
             <template x-for="(item, index) in escala.slice(1)" :key="index">
-                <div class="dark-card rounded-2xl p-5 flex justify-between items-center transition-all">
-                    <div class="flex items-center">
-                        <div :class="item.diaSemana === 'Quinta' ? 'text-amber-500 border-amber-500/30' : 'text-blue-400 border-blue-400/30'" 
-                             class="w-12 h-12 rounded-full bg-slate-900 border flex flex-col items-center justify-center mr-4 shadow-inner">
-                            <span class="text-[10px] font-bold uppercase" x-text="item.diaSemana.substring(0,3)"></span>
-                        </div>
-                        <div>
-                            <p class="font-bold text-slate-100 text-lg leading-none mb-1" x-text="item.pessoa"></p>
-                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest" x-text="item.dataStr"></p>
-                        </div>
+                <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-5 flex justify-between items-center transition-all">
+                    <div>
+                        <p class="font-bold text-slate-100 text-lg leading-none mb-1" x-text="item.pessoa"></p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest" x-text="item.dataStr + ' (' + item.diaSemana + ')'"></p>
                     </div>
-                    <div class="h-1 w-4 rounded-full bg-slate-800"></div>
                 </div>
             </template>
         </div>
 
         <footer class="mt-20 py-4 text-center">
-            <a href="admin.html" class="inline-block w-12 h-12 opacity-0 cursor-default select-none focus:outline-none">
-                .
-            </a>
+            <a href="admin.html" class="inline-block w-12 h-12 opacity-0 cursor-default">.</a>
         </footer>
     </div>
 
     <script>
+        const SUPABASE_URL = 'sb_publishable_DjWbN2NrfjKTmm9LBLudpA_0cphVk4e';
+        const SUPABASE_KEY = 'sb_secret_tLbXFlTVfAX2mzEwa-ta_A_mLFOVf-D';
+        const supabase = exports.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         document.addEventListener('alpine:init', () => {
             Alpine.data('sistemaPublico', () => ({
-                pessoas: JSON.parse(localStorage.getItem('cafe_v3')) || [],
+                pessoas: [],
                 escala: [],
 
-                init() { 
-                    this.gerarEscala(); 
+                async init() {
+                    const { data } = await supabase.from('cafe_equipe').select('nome').order('ordem', { ascending: true });
+                    this.pessoas = data.map(p => p.nome);
+                    this.gerarEscala();
                     this.registrarNoHistorico();
-                    
-                    // Auto-refresh a cada 1 hora para manter a página atualizada em monitores
-                    setInterval(() => {
-                        window.location.reload();
-                    }, 3600000);
                 },
 
-                registrarNoHistorico() {
-                    if (this.pessoas.length === 0 || this.escala.length === 0) return;
-
+                async registrarNoHistorico() {
                     let agora = new Date();
                     let hojeStr = agora.toLocaleDateString('pt-BR');
-                    let diaSemana = agora.getDay();
-
-                    // Se for Quinta (4) ou Sexta (5)
-                    if (diaSemana === 4 || diaSemana === 5) {
-                        let historico = JSON.parse(localStorage.getItem('cafe_historico')) || [];
-                        
-                        // Registra se o dia de hoje ainda não estiver no log
-                        if (!historico.find(h => h.data === hojeStr)) {
-                            historico.push({
-                                data: hojeStr,
-                                pessoa: this.escala[0].pessoa
-                            });
-                            localStorage.setItem('cafe_historico', JSON.stringify(historico));
+                    if ([4,5].includes(agora.getDay()) && this.escala.length > 0) {
+                        const { data: exist } = await supabase.from('cafe_historico').select('id').eq('data', hojeStr);
+                        if (exist.length === 0) {
+                            await supabase.from('cafe_historico').insert([{ data: hojeStr, pessoa: this.escala[0].pessoa }]);
                         }
                     }
                 },
@@ -116,28 +87,16 @@
                     if (this.pessoas.length === 0) return;
                     const res = [];
                     let dataLoop = new Date();
-                    
-                    // Marco Zero: 01/01/2026
                     const dataRef = new Date(2026, 0, 1);
-                    
-                    // Conta dias de café passados desde a referência até hoje (00:00:00)
                     let buscaPassado = new Date(dataRef);
-                    let hojeInicio = new Date();
-                    hojeInicio.setHours(0,0,0,0);
-                    
+                    let hojeInicio = new Date().setHours(0,0,0,0);
                     let cafePassados = 0;
                     while(buscaPassado < hojeInicio) {
-                        let d = buscaPassado.getDay();
-                        if(d === 4 || d === 5) cafePassados++;
-                        buscaPassado.setDate(buscaPassado.setDate() + 1);
+                        if([4,5].includes(buscaPassado.getDay())) cafePassados++;
+                        buscaPassado.setDate(buscaPassado.getDate() + 1);
                     }
-                    
                     let indiceFila = cafePassados;
-                    
-                    // Gera as próximas 6 datas a partir de amanhã/hoje
-                    // Nota: Se hoje for dia de café, ele aparece como o primeiro (índiceFila)
-                    let contadorSeguranca = 0;
-                    while (res.length < 6 && contadorSeguranca < 100) {
+                    while (res.length < 6) {
                         let d = dataLoop.getDay();
                         if ([4,5].includes(d)) {
                             res.push({
@@ -148,7 +107,6 @@
                             indiceFila++;
                         }
                         dataLoop.setDate(dataLoop.getDate() + 1);
-                        contadorSeguranca++;
                     }
                     this.escala = res;
                 }
