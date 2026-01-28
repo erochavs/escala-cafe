@@ -112,7 +112,8 @@
                     }
                     let indiceFila = cafePassados;
                     let tentativas = 0;
-                    while (res.length < 6 && tentativas < 50) {
+                    // ALTERADO: Agora busca 10 itens e aumentamos as tentativas para cobrir as datas futuras
+                    while (res.length < 10 && tentativas < 100) {
                         let d = dataLoop.getDay();
                         if ([4,5].includes(d)) {
                             res.push({
